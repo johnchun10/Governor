@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e '.[dev]'
+      - run: ruff check . && ruff format --check .
+      - run: pytest
+
+  core-guard:
+    # Fails a PR that touches agent_core unless it carries the `core-change` label,
+    # so feature PRs provably leave the primitives untouched.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for core changes
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          HAS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'core-change') }}
+        run: |
+          changed=$(git diff --name-only "$BASE" "$HEAD" -- src/agent_core tests/test_core)
+          if [ -z "$changed" ]; then
+            echo "core untouched"
+            exit 0
+          fi
+          echo "This PR changes agent_core:"
+          echo "$changed"
+          if [ "$HAS_LABEL" != "true" ]; then
+            echo "::error::Changes to agent_core need the 'core-change' label and a separate PR (see src/agent_core/README.md)."
+            exit 1
+          fi
+          echo "core-change label present; code-owner review required."

@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.egg-info/
+.env
+.governor/runs/
+.pytest_cache/
+.ruff_cache/
+.governor/chats/
+.claude/worktrees/

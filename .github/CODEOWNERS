@@ -1,0 +1,7 @@
+# Changes to the agent primitives need a review from a core owner.
+# Replace the placeholder handles with real GitHub usernames before enabling
+# "Require review from Code Owners" in branch protection.
+/src/agent_core/            @CORE_OWNER_1 @CORE_OWNER_2
+/tests/test_core/           @CORE_OWNER_1 @CORE_OWNER_2
+/tests/test_boundaries.py   @CORE_OWNER_1 @CORE_OWNER_2
+/.github/                   @CORE_OWNER_1 @CORE_OWNER_2
